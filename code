@@ -1,15 +1,15 @@
 !pip install torch torchvision torchaudio
 !pip install transformers datasets
-#
+#----mỗi phần được '#---' trong đấu này 1 đoạn code CẦN CHẠY RIÊNG-------------
 !pip install transformers datasets vncorenlp flask
-#
+#-----------------------------------------------------------------------
 from datasets import load_dataset
 
 dataset = load_dataset('cnn_dailymail', '3.0.0')
 train_data = dataset['train']
 valid_data = dataset['validation']
 test_data = dataset['test']
-#
+#-----------------------------------------------------------------------
 from transformers import BartTokenizer
 
 tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
@@ -20,16 +20,16 @@ def tokenize_function(example):
 train_data = train_data.map(tokenize_function, batched=True)
 valid_data = valid_data.map(tokenize_function, batched=True)
 test_data = test_data.map(tokenize_function, batched=True)
-#
+#-----------------------------------------------------------------------
 from transformers import BartForConditionalGeneration
 
 model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
-#
+#-----------------------------------------------------------------------
 from torch.utils.data import DataLoader
 
 train_dataloader = DataLoader(train_data, batch_size=8, shuffle=True)
 valid_dataloader = DataLoader(valid_data, batch_size=8)
-#
+#-----------------------------------------------------------------------
 from transformers import AdamW, get_scheduler
 
 # Giả sử bạn đã định nghĩa model và train_dataloader trước đó
@@ -53,8 +53,8 @@ lr_scheduler = get_scheduler(
     num_training_steps=num_training_steps
 )
 
-# Tiếp tục với quá trình huấn luyện...
-#
+
+#-----------------------------------------------------------------------
 import torch
 from tqdm.auto import tqdm
 from torch.utils.data import DataLoader
@@ -131,9 +131,9 @@ for epoch in range(num_epochs):
             progress_bar.update(1)
 
 print("Training complete!")
-#
+#-----------------------------------------------------------------------
 !pip install --upgrade transformers safetensors
-#
+#-----------------------------------------------------------------------
 from transformers import BartForConditionalGeneration, BartTokenizer, GenerationConfig
 
 # Tạo mô hình và tokenizer từ pretrained
@@ -158,7 +158,7 @@ tokenizer.save_pretrained("./summarization_model")
 generation_config.save_pretrained("./summarization_model")
 
 print("Model, tokenizer, and GenerationConfig saved successfully!")
-#
+#-----------------------------------------------------------------------
 from transformers import BartForConditionalGeneration, BartTokenizer, GenerationConfig
 
 # Tải mô hình, tokenizer, và GenerationConfig từ thư mục lưu
@@ -182,3 +182,4 @@ summary_ids = model.generate(
 summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
 print("Summary:", summary)
+#-----------------------------------------------------------------------
