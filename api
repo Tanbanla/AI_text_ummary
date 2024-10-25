@@ -1,0 +1,181 @@
+api
+1-  "ConnectionStrings": {
+    "SqlServer": "Server=apbivndb14; Database=LENDDING_EQUIPMENT ;User Id=appl_db14;Password=Bivnappl@db14;TrustServerCertificate=True;",
+    "SqlServer1": "Server=apbivndb14; Database=AGENTDB ;User Id=appl_db14;Password=Bivnappl@db14;TrustServerCertificate=True;"
+  }
+2- Core.SqlSever
+- Tools
+3- 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<UserDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")));
+builder.Services.AddDbContext<UserDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer1")));
+4- Modles
+{
+    public class UserModels
+    {
+        public int? ID { get; set; }  // IDENTITY (1,1)
+
+        public string? CHR_USER { get; set; }  // VARCHAR(15)
+
+        public string? VCHR_PASSWORD { get; set; }  // VARCHAR(15)
+
+        public string? VCHR_USERNAME { get; set; }  // NVARCHAR(255)
+
+        public string? CHR_SECTION_CODE { get; set; }  // VARCHAR(8)
+
+        public string? VCHR_SECTION_NAME { get; set; }  // VARCHAR(50)
+
+        public string? CHR_EMPLOYEE_ID { get; set; }  // VARCHAR(10)
+
+        public string? CHR_EMPLOYEE_ADID { get; set; }  // VARCHAR(15)
+
+        public DateTime? DTM_LAST_LOGIN { get; set; }  // DATETIME
+
+        public int? INT_LOCK { get; set; }  // INT
+
+        public int? INT_LOCK_DAY { get; set; }  // INT
+
+        public string? CHR_USER_CREATE { get; set; }  // VARCHAR(15)
+
+        public DateTime? DTM_CREATE { get; set; }  // DATETIME
+
+        public string? CHR_USER_UPDATE { get; set; }  // VARCHAR(15)
+
+        public DateTime? DTM_UPDATE { get; set; }  // DATETIME
+    }
+5 - Data
+
+    public class UserDbContext : DbContext
+    {
+        public UserDbContext(DbContextOptions<UserDbContext> options) : base(options) {
+        }
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<EquipBrow>().ToTable(tb => tb.HasTrigger("TM_EQUIP_BROW_trigger_insert"));
+        }
+        public DbSet<UserModels> TM_USER { get; set; } = null!;
+        public DbSet<CheckDayli> TM_CHECK_DAYLI { get; set; } = null!;
+        public DbSet<Equipment> TM_EQUIP { get; set; } = null!;
+        public DbSet<EquipBrow> TM_EQUIP_BROW { get; set; } = null!;
+        public DbSet<EquipBrowLog> TM_EQUIP_BROW_LOG { get; set; } = null!;
+        public DbSet<MasterStatus> TM_MASTER_STATUS { get; set; } = null!;
+        public DbSet<Employee> TM_EMPLOYEE { get; set; } = null!;
+    }
+6 - Controllers
+    [ApiController]
+    [Route("api/[controller]")]
+    public class EquipBrowController: ControllerBase
+    {
+        private readonly UserDbContext _DbContext;
+        public EquipBrowController(UserDbContext _DbContext)
+        {
+            this._DbContext = _DbContext;
+        }
+        [HttpGet("EquipBrowcode/{code}")]
+        public async Task<IActionResult> GetByDayli(int code)
+        {
+            if (code==null)
+            {
+                return BadRequest("Nhập tên thiết bị");
+            }
+
+            var dayli = _DbContext.TM_EQUIP_BROW
+                                   .Where(p => p.ID == code);
+                         
+
+            if (!dayli.Any())
+            {
+                return NotFound("Thiết bị không có trong hệ thống");
+            }
+
+            return Ok(dayli);
+        }
+        [HttpGet("EquipBrowName/{name2}")]
+        public async Task<IActionResult> GetByName(string name2)
+        {
+            if (string.IsNullOrEmpty(name2))
+            {
+                return BadRequest("Nhập tên thiết bị.");
+            }
+
+            // Lấy mã thiết bị đã kiểm tra
+            var checkedEquipmentCodes = await _DbContext.TM_EQUIP
+                .Where(c => c.CHR_DECODE.ToUpper() == name2.ToUpper())
+                .Select(c => c.CHR_EQUIP_CODE)
+                .ToListAsync();
+
+            // Lấy danh sách thiết bị theo mã
+            var dayli = await _DbContext.TM_EQUIP_BROW
+                .Where(p => (
+                    checkedEquipmentCodes.Contains(p.CHR_EQUIP_CODE) ||
+                    p.CHR_EQUIP_CODE.ToUpper() == name2.ToUpper())
+                    && (p.BIT_END == null || p.BIT_END == false))
+                .ToListAsync();
+
+            if (!dayli.Any())
+            {
+                return NotFound("Không tìm thấy thiết bị trong hệ thống.");
+            }
+
+            // Lấy thiết bị cuối cùng trong danh sách
+            var lastEquip = dayli.LastOrDefault();
+
+            if (lastEquip == null)
+            {
+                return NotFound("Không tìm thấy thiết bị cuối cùng.");
+            }
+
+            return Ok(lastEquip);
+        }
+        [HttpPost]
+        public async Task<IActionResult> PostDayli([FromBody] EquipBrow equipBrow)
+        {
+            if (equipBrow == null)
+            {
+                return BadRequest("Không được để trống."); 
+            }
+
+            try
+            {
+                _DbContext.TM_EQUIP_BROW.Add(equipBrow);
+                await _DbContext.SaveChangesAsync();
+
+                return Ok(equipBrow);
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, "Lỗi khi lưu dữ liệu: " + ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Đã xảy ra lỗi: " + ex.Message);
+            }
+        }
+        [HttpPut("{id}")]
+        public async Task<ActionResult<EquipBrow>> PutDayli(int id, EquipBrow dayli)
+        {
+            if (id != dayli.ID)
+            {
+                return BadRequest("Không được để trống thông tin");
+            }
+            _DbContext.Entry(dayli).State = EntityState.Modified;
+            try
+            {
+                await _DbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_DbContext.TM_EQUIP_BROW.Any(e => e.ID == id))
+                {
+                    return NotFound("Lỗi vui lòng kiểm tra");
+                }
+                else
+                {
+                    throw;
+                }
+
+            }
+            return Ok(dayli);
+        }
+    }
