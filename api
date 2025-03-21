@@ -179,3 +179,4 @@ builder.Services.AddDbContext<UserDbContext>(options => options.UseSqlServer(bui
             return Ok(dayli);
         }
     }
+https://youtu.be/RKrWgdCUP1U?si=v-Kais7MCmZgJzMT   https://youtu.be/7dAt-JMSCVQ?si=Xd72fK3JNMd8yYd3
