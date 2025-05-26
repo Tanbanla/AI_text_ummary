@@ -180,3 +180,30 @@ builder.Services.AddDbContext<UserDbContext>(options => options.UseSqlServer(bui
         }
     }
 https://youtu.be/RKrWgdCUP1U?si=v-Kais7MCmZgJzMT   https://youtu.be/7dAt-JMSCVQ?si=Xd72fK3JNMd8yYd3
+  // Tạo màu đỏ cho text giảm giá
+                let discountColor = UIColor.red
+                let discountFont = UIFont.systemFont(ofSize: 11) // Font nhỏ hơn một chút
+                // Giảm giá (ngay dưới đơn giá)
+                if discount > 0 {
+                    let discountText = "-\(Int(discount).formattedWithSeparator())"
+                    let discountWidth = discountText.width(withFont: discountFont)
+                    
+                    // Vẽ text giảm giá màu đỏ
+                    let discountAttributes: [NSAttributedString.Key: Any] = [
+                        .font: discountFont,
+                        .foregroundColor: discountColor
+                    ]
+                    let discountTextSize = discountText.size(withAttributes: discountAttributes)
+                    let discountRect = CGRect(x: 360 + (80 - discountWidth)/2,
+                                            y: yPosition + 20,
+                                            width: discountTextSize.width,
+                                            height: discountTextSize.height)
+                    discountText.draw(in: discountRect, withAttributes: discountAttributes)
+                }
+                
+                _ = drawText("\(Int(productAmount).formattedWithSeparator())", 480, 100, bodyFont)
+                yPosition += 20
+                // Nếu có giảm giá thì tăng thêm khoảng cách
+                if discount > 0 {
+                    yPosition += 20
+                }
