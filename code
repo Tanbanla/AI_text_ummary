@@ -182,4 +182,4 @@ summary_ids = model.generate(
 summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
 print("Summary:", summary)
-#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------https://lottiefiles.com/free-animation/sumo-splash-screen-DzjvN3EyER
