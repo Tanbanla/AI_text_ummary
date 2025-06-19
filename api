@@ -212,3 +212,35 @@ private func saveCSVToDownloads() {
         print("❌ Lỗi khi lưu file CSV: \(error.localizedDescription)")
     }
 }
+
+
+
+
+
+private func saveCSVToiCloudDownloads() {
+    // ... (Tạo csvString như trên)
+    
+    guard let iCloudURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents/Downloads") else {
+        print("❌ Không thể truy cập iCloud Drive")
+        return
+    }
+    
+    // Tạo thư mục Downloads nếu chưa có
+    if !FileManager.default.fileExists(atPath: iCloudURL.path) {
+        do {
+            try FileManager.default.createDirectory(at: iCloudURL, withIntermediateDirectories: true)
+        } catch {
+            print("❌ Lỗi khi tạo thư mục Downloads: \(error.localizedDescription)")
+            return
+        }
+    }
+    
+    let fileURL = iCloudURL.appendingPathComponent("hoadon_nhap.csv")
+    
+    do {
+        try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
+        print("✅ Đã lưu file vào iCloud Drive: \(fileURL.path)")
+    } catch {
+        print("❌ Lỗi khi lưu file: \(error.localizedDescription)")
+    }
+}
