@@ -180,30 +180,35 @@ builder.Services.AddDbContext<UserDbContext>(options => options.UseSqlServer(bui
         }
     }
 https://youtu.be/RKrWgdCUP1U?si=v-Kais7MCmZgJzMT   https://youtu.be/7dAt-JMSCVQ?si=Xd72fK3JNMd8yYd3
-  // Tạo màu đỏ cho text giảm giá
-                let discountColor = UIColor.red
-                let discountFont = UIFont.systemFont(ofSize: 11) // Font nhỏ hơn một chút
-                // Giảm giá (ngay dưới đơn giá)
-                if discount > 0 {
-                    let discountText = "-\(Int(discount).formattedWithSeparator())"
-                    let discountWidth = discountText.width(withFont: discountFont)
-                    
-                    // Vẽ text giảm giá màu đỏ
-                    let discountAttributes: [NSAttributedString.Key: Any] = [
-                        .font: discountFont,
-                        .foregroundColor: discountColor
-                    ]
-                    let discountTextSize = discountText.size(withAttributes: discountAttributes)
-                    let discountRect = CGRect(x: 360 + (80 - discountWidth)/2,
-                                            y: yPosition + 20,
-                                            width: discountTextSize.width,
-                                            height: discountTextSize.height)
-                    discountText.draw(in: discountRect, withAttributes: discountAttributes)
-                }
-                
-                _ = drawText("\(Int(productAmount).formattedWithSeparator())", 480, 100, bodyFont)
-                yPosition += 20
-                // Nếu có giảm giá thì tăng thêm khoảng cách
-                if discount > 0 {
-                    yPosition += 20
-                }
+import UIKit
+import MobileCoreServices
+
+private func saveCSVToDownloads() {
+    guard !danhSachHoaDon.isEmpty else {
+        print("⚠️ Không có dữ liệu hóa đơn nhập để xuất CSV.")
+        return
+    }
+
+    // Tạo nội dung CSV (giữ nguyên như code của bạn)
+    var csvString = "\u{FEFF}"
+    csvString += "STT,Mã nước giặt,Tên,Đơn vị tính,Giá nhập,Số lượng,Tổng tiền,Ghi chú,Ngày tạo,Trạng thái\n"
+    
+    // ... (Thêm dữ liệu vào csvString như code ban đầu)
+
+    do {
+        // Lưu tạm vào thư mục tạm thời
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("hoadon_nhap.csv")
+        try csvString.write(to: tempURL, atomically: true, encoding: .utf8)
+
+        // Hiển thị UIDocumentPicker để người dùng chọn nơi lưu
+        let documentPicker = UIDocumentPickerViewController(forExporting: [tempURL], asCopy: true)
+        documentPicker.shouldShowFileExtensions = true
+        
+        // Hiển thị picker (cần có UIViewController để present)
+        if let rootVC = UIApplication.shared.keyWindow?.rootViewController {
+            rootVC.present(documentPicker, animated: true)
+        }
+    } catch {
+        print("❌ Lỗi khi lưu file CSV: \(error.localizedDescription)")
+    }
+}
