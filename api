@@ -244,3 +244,84 @@ private func saveCSVToiCloudDownloads() {
         print("❌ Lỗi khi lưu file: \(error.localizedDescription)")
     }
 }
+// cái mới nhé
+import UIKit
+
+private func saveCSVToiCloudDownloads() {
+    guard !danhSachHoaDon.isEmpty else {
+        print("⚠️ Không có dữ liệu để xuất CSV.")
+        return
+    }
+
+    // 1. Tạo nội dung CSV
+    var csvString = "\u{FEFF}STT,Mã nước giặt,Tên,Đơn vị tính,Giá nhập,Số lượng,Tổng tiền,Ghi chú,Ngày tạo,Trạng thái\n"
+    
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "dd/MM/yyyy HH:mm"
+    dateFormatter.locale = Locale(identifier: "vi_VN")
+
+    for (index, item) in danhSachHoaDon.enumerated() {
+        let trangThaiString = item.trangthai ? "Đã thanh toán" : "Chưa thanh toán"
+        let row = [
+            "\(index + 1)",
+            "\"\(item.maNuocGiat)\"",
+            "\"\(item.ten)\"",
+            "\"\(item.donViTinh)\"",
+            String(format: "%.2f", item.giaNhap),
+            "\(item.soLuong)",
+            String(format: "%.2f", item.TongTien),
+            "\"\(item.ghiChu ?? "")\"",
+            "\"\(dateFormatter.string(from: item.ngayTao))\"",
+            "\"\(trangThaiString)\""
+        ].joined(separator: ",")
+
+        csvString += row + "\n"
+    }
+
+    // 2. Lưu vào iCloud Drive > Downloads
+    guard let iCloudURL = FileManager.default.url(forUbiquityContainerIdentifier: nil)?
+        .appendingPathComponent("Documents").appendingPathComponent("Downloads") else {
+        print("❌ iCloud Drive không khả dụng")
+        DispatchQueue.main.async {
+            let alert = UIAlertController(
+                title: "Lỗi iCloud",
+                message: "Vui lòng bật iCloud Drive trong Cài đặt để sử dụng tính năng này.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true)
+        }
+        return
+    }
+
+    do {
+        // 3. Tạo thư mục Downloads nếu chưa có
+        try FileManager.default.createDirectory(at: iCloudURL, withIntermediateDirectories: true, attributes: nil)
+        
+        // 4. Lưu file CSV
+        let fileURL = iCloudURL.appendingPathComponent("hoadon_nhap.csv")
+        try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
+        
+        print("✅ Đã lưu file vào iCloud Drive: \(fileURL.path)")
+        
+        // 5. Thông báo thành công
+        DispatchQueue.main.async {
+            let alert = UIAlertController(
+                title: "Đã lưu file",
+                message: "File CSV đã được lưu vào thư mục Downloads trong iCloud Drive.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "Mở Files", style: .default) { _ in
+                // Mở ứng dụng Files (Tệp) để xem file
+                if let filesAppURL = URL(string: "shareddocuments://\(fileURL.deletingLastPathComponent().path)") {
+                    UIApplication.shared.open(filesAppURL)
+                }
+            })
+            alert.addAction(UIAlertAction(title: "OK", style: .cancel))
+            
+            UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true)
+        }
+    } catch {
+        print("❌ Lỗi khi lưu file: \(error.localizedDescription)")
+    }
+}
